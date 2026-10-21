@@ -1,0 +1,39 @@
+name: Compile OpenDiscovery macOS icon
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - macos-inputs.json
+      - compile-macos.mjs
+      - .github/workflows/compile-macos-assets.yml
+
+permissions:
+  contents: read
+
+jobs:
+  catalogue:
+    runs-on: macos-26
+    timeout-minutes: 10
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - name: Check out the disposable asset repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Select Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.21.0
+      - name: Validate the exact icon inputs
+        run: node compile-macos.mjs --check-inputs
+      - name: Compile with Apple tools and inspect the catalogue
+        run: node compile-macos.mjs
+      - name: Upload catalogue and source-bound provenance
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: opendiscovery-macos-catalogue
+          path: macos-output/
+          if-no-files-found: error
+          retention-days: 7
